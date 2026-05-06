@@ -12,7 +12,11 @@ class Vehicle {
 
     }
 }
-
+//sensse modificador: accesible nomes dins el mateix paquet.
+//public: accesible per tothom, dins i fora del paquet.
+//protected: accesible dins el mateix paquet, pero tambie per classes que herten tambe foradel pqeut
+// private: accessible nomes dins la mateixa clase. prohibeix acces desde matiex paquet fora del paquet i tambe
+//les classes que hereten dins como fora del paquet
 class Car extends  Vehicle{
     @Override
     protected void avanca(){
