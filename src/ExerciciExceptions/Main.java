@@ -58,12 +58,10 @@ class ConexioFallidaException extends RuntimeException{
 }
 class ConsultaInvalidaException extends SistemaException{
 
-   ConsultaInvalidaException(String missatge) {
-       super(missatge);
+   ConsultaInvalidaException() {
+       super("consulta invalida");
    }
-    ConsultaInvalidaException(String missatge, Throwable cause){
-        super(missatge,cause);
-    }
+
 }
 
 public class Main {
@@ -85,6 +83,13 @@ public class Main {
         System.out.println("\n=== PROCESSANT DADES DELS USUARIS ===");
         // Prova de la Tasca 6. Crida a "processarUsuari" amb dades invàlides i comprova si genera les excepcions corresponents.
         // TODO: En capturar 'DadesNoValidesException', mostra també el 'valorErroni' fent servir el getter que has creat.
+        try {
+            processarUsuari("12","a");
+        }catch (NumberFormatException e){
+            System.out.println("Error: "+ e.getMessage());
+        }catch (DadesNoValidesException e){
+            System.out.println("Dades no valides Error: " +e.getMessage());
+        }
 
         System.out.println("\n=== CONSULTANT BASE DE DADES ===");
         // Prova de la Tasca 7
@@ -107,8 +112,7 @@ public class Main {
             // amb el missatge "Fallada crítica en arrencar el sistema".
             // MOLT IMPORTANT: Passa l'excepció original (e) com a causa al constructor de SistemaException.
             // Finalment, llança la nova SistemaException.
-            SistemaException errorException=new SistemaException("error");
-            throw errorException;
+            throw new SistemaException("Fallada critica en arrancar el sistema",e);
 
         }
     }
@@ -124,29 +128,18 @@ public class Main {
     /**
      * TASCA 6: Multi-catch (Java 7+) i llançament explícit d'excepcions.
      */
-    public static void processarUsuari(String idStr, String nom) throws DadesNoValidesException {
+    public static void processarUsuari(String idStr, String nom) throws NumberFormatException, DadesNoValidesException {
         // Processa usuari. Llança excepcions en els següents casos:
         // 1. L'string idStr s'ha de poder convertir a número. Si no és així, llança NumberFormatException.
         // 2. L'string "nom" no pot estar buit ni tenir només espais.
         // 3. L'string "nom" ha de tenir més de 3 caràcters.
         // TODO: Pels errors de "nom", llança 'DadesNoValidesException' passant-li el nom erroni com a segon argument.
-        String n="";
-        for (int i = 0; i < idStr.length(); i++) {
-            char c=idStr.charAt(i);
-            if (c>='0' && c<='9'){
-                n=n+c;
-        } else {
-               throw new NumberFormatException("No es numero");
-            }
-        }
-        int id=Integer.parseInt(n);
+        idStr=nom.trim();
+        if (nom.length()==0) throw  new DadesNoValidesException("camp buit",nom);
+    if(nom.length()<3) throw  new DadesNoValidesException("longitud inferior 3",nom);
 
-        if (nom.isEmpty()){
-            throw new DadesNoValidesException("El nombre esta vacio");
-        }
-        if (nom.length()<=3){
-            throw  new DadesNoValidesException("El nombre tiene que tener mas de tres caracteres","8");
-        }
+    int id = Integer.parseInt(idStr);
+
 
     }
 
@@ -168,6 +161,26 @@ public class Main {
         //    c. Captura 'Exception' genèrica: Imprimeix "Error inesperat."
         // 4. Afegeix un bloc 'finally' per tancar la connexió de manera segura.
         //    Recorda que close() també pot llançar una excepció!
+        ConnexioBaseDades bd= null;
+        try{
+           bd=new ConnexioBaseDades();
+           bd.connectar();
+           bd.executar("SELECT * FROM USER");
+
+        } catch (ConsultaInvalidaException e){
+            System.out.println("Error de sintaxi: "+ e.getMessage());
+        } catch (ConexioFallidaException e){
+            System.out.println("error xarxa "+ e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error inesperado");
+        }finally {
+            try {
+                bd.close();
+            } catch (Exception e){
+                System.out.println("error en tancar la base de dades");
+            }
+
+        }
 
         System.out.println("[Tasca 7] Intentant executar consulta...");
     }
@@ -190,10 +203,14 @@ class ConnexioBaseDades {
         // Simulem dos tipus d'errors:
         // 1. Si la query és buida o nul·la, llança 'ConsultaInvalidaException'.
         // TODO
-
+        if (query == null || query.length() == 0) {
+            throw  new ConsultaInvalidaException();
+        }
         // 2. Simulem un error de xarxa si la query conté paraules prohibides com 'DROP'
         // TODO
-
+        if (query.toUpperCase().contains("DROP")){
+            throw  new SistemaException("error de red");
+        }
         System.out.println("[BD] Consulta executada correctament.");
     }
 
